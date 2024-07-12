@@ -10,6 +10,8 @@
 #define SIZE(x) (sizeof(x) / sizeof(x[0]))
 #define ARG(i, s) (strcmp(argv[i], s) == 0)
 
+long long bytes = 0;
+
 struct loc_options
 {
     int all;
@@ -272,6 +274,7 @@ int main(int argc, char** argv)
         PRINT_REPORT(report.total.language, &report.total.info, report.total.files);
         printf("--------------------------+------------+------------+------------+------------\n");
         printf("\n");
+        printf("%lld", bytes);
 
     }
 
@@ -409,9 +412,18 @@ loc_info parse_file(FILE* file, loc_language* lang)
     char* s2 = calloc(1000, sizeof(char));
     while(fgets(s2, 1000, file))
     {
+        info.total_lines++;
+        
+        //bytes += strlen(s2);
         char* s = s2;
         while(*s == ' ')
             s++;
+
+        if(s[0] == '\n')
+        {
+            info.blank_lines++;
+            continue;
+        }
 
         if(sl > 0 && memcmp(s, lang->com.sl, sl) == 0)
         {
@@ -439,8 +451,6 @@ loc_info parse_file(FILE* file, loc_language* lang)
 
         if(com_status == 1)
             info.com_lines++;
-
-        info.total_lines++;
     }
     free(s2);
 
