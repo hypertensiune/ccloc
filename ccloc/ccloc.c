@@ -206,7 +206,8 @@ static inline void PRINT_TIME_STATS(double time, int files, long long bytes)
 
 static inline void PRINT_HELP()
 {
-    printf("Usage:\n loc <directory|file> [options]\n\n");
+    printf("ccloc v1.0\nhttps://github.com/hypertensiune/ccloc\n\n");
+    printf("Usage:\n ccloc <directory|file> [options]\n\n");
     printf("Options:\n");
     printf(" -h,  --help                 Print this info\n");
     printf(" -a,  --all                  Show details about every file\n");
@@ -276,7 +277,6 @@ int loc_list_search(loc_list* list, const char* str)
     return 0;
 }
 
-
 int get_lang(char* file)
 {
     char aux[MAX_FILE_LEN]; //= calloc(strlen(file), sizeof(char));
@@ -297,7 +297,27 @@ int get_lang(char* file)
         int m = (l + r) / 2;
         int comp = strcmp(extension, extensions[m].name);
         if(comp == 0)
+        {
+            int lang_id = extensions[m].lang_id;
+            
+            // if wanted languages are specified check if the identified 
+            // language of the current file is in that list
+            if(options.langs_n > 0)
+            {
+                int found = 0;
+                for(int i = 0; i < options.langs_n; i++)
+                {
+                    if(strcmp(languages[lang_id].name, options.langs_array[i]) == 0)
+                    {
+                        found = 1;
+                        break;
+                    }
+                }
+                if(!found)
+                    return -1;
+            }
             return extensions[m].lang_id;
+        }
         else if(comp < 0)
             r = m - 1;
         else
@@ -474,26 +494,6 @@ int loc(const char* path, loc_list gitignoreFiles, queue* fileq)
         else
         {     
             enqueue(fileq, file);
-            // loc_language* lang = get_lang(file);
-            // if(lang != NULL)
-            // {
-
-            //     FILE* f = fopen(file, "rb");
-            //     loc_info info = parse_file(f, lang);
-            //     fclose(f);
-
-            //     if(options.all)
-            //     {
-            //         PRINT_FILE_REPORT(file, lang->name, &info);
-            //         report->total.info.total_lines += info.total_lines;
-            //         report->total.info.code_lines += info.code_lines;
-            //         report->total.info.com_lines += info.com_lines;
-            //     }
-            //     else
-            //     {
-            //         lang_report_add(report, lang->name, &info);
-            //     }
-            // }
         }
 
     } while(FindNextFile(findHnd, &findData));
@@ -547,12 +547,10 @@ void* thread_worker(void* arg)
 
             if(options.all)
             {
-                PRINT_FILE_REPORT(s + 2, lang_id, &info);
+                PRINT_FILE_REPORT(s, lang_id, &info);
             }
-            else
-            {
-                lang_report_add(targ->report, lang_id, &info);
-            }
+            
+            lang_report_add(targ->report, lang_id, &info);
         }
         free(s);
     }
@@ -563,7 +561,7 @@ int main(int argc, char** argv)
     int nthreads = 20;
     pthread_t threads[100];
 
-    if(argc < 2 || ARG(1, "-h") || ARG(1, "--help"))
+    if(argc < 2 || ARG(1, "-h") || ARG(1, "--help") || argv[1][0] == '-')
     {
         PRINT_HELP();
         return 0;
@@ -601,6 +599,20 @@ int main(int argc, char** argv)
     
     clock_t begin = clock();
 
+    // if the path given is a file open and process it right away
+    FILE* f = fopen(argv[1], "r");
+    if(f != NULL)
+    {
+        int lang_id = get_lang(argv[1]);
+        loc_info info = parse_file(f, &languages[lang_id]);
+        fclose(f);
+
+        PRINT_REPORT_HEADER();
+        printf("%-25s | %10d | %10d | %10d | %10d\n", languages[lang_id].name, info.total_lines, info.code_lines, info.com_lines, 1);
+        printf("--------------------------+------------+------------+------------+------------\n\n");
+
+        return 0;
+    }
 
     loc_list gitignoredFiles = {NULL, NULL};
     loc_list_add(&gitignoredFiles, ".\\.gitignore");
