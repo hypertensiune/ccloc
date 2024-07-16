@@ -1,3 +1,27 @@
+/*
+    MIT License
+
+    Copyright (c) 2024 hypertensiune
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE.
+*/
+
 #include <windows.h>
 
 #include <pthread.h>
@@ -34,7 +58,7 @@ typedef struct
     int code_lines;
     int blank_lines;
     int files;
-    long bytes;
+    long long bytes;
 } loc_info;
 
 typedef struct 
@@ -165,7 +189,7 @@ static inline void PRINT_FILE_REPORT_TOTAL(loc_info *li)
     printf("---------------------------------------------------+---------------------------+------------+------------+------------\n");
 }
 
-static inline void PRINT_TIME_STATS(double time, int files, long bytes)
+static inline void PRINT_TIME_STATS(double time, int files, long long bytes)
 {
     double files_per_sec = files / time;
     double bytes_per_sec = bytes / time;
@@ -301,7 +325,7 @@ loc_info parse_file(FILE* file, loc_language* lang)
         // https://stackoverflow.com/a/238607
         fseek(file, 0, SEEK_END);
         long size = ftell(file);
-        info.bytes = size;
+        info.bytes = (long long)size;
 
         fseek(file, 0, SEEK_SET);
     }
@@ -537,7 +561,7 @@ void* thread_worker(void* arg)
 int main(int argc, char** argv)
 {    
     int nthreads = 20;
-    pthread_t threads[50];
+    pthread_t threads[100];
 
     if(argc < 2 || ARG(1, "-h") || ARG(1, "--help"))
     {
