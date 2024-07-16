@@ -339,7 +339,7 @@ loc_info parse_file(FILE* file, loc_language* lang)
         while(*s == ' ')
             s++;
 
-        if(s[0] == '\n')
+        if(s[0] == '\n' && com_status == 0)
         {
             info.blank_lines++;
             continue;
@@ -600,6 +600,7 @@ int main(int argc, char** argv)
     }
     
     clock_t begin = clock();
+
 
     loc_list gitignoredFiles = {NULL, NULL};
     loc_list_add(&gitignoredFiles, ".\\.gitignore");
