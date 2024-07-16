@@ -6,7 +6,7 @@
     <a href="https://github.com/XAMPPRocky/tokei">tokei</a>,
     <a href="https://github.com/boyter/scc">scc</a> and
     <a href="https://github.com/AlDanial/cloc">cloc</a>.
-    CCLOC has vast language support, can accurately count lines of code. ([see](#notes) for more details about comment lines counting). 
+    CCLOC has vast language support, can accurately count lines of code. ([see](#how-it-works) for more details about comment lines counting). 
     It's goal is to be the <b>fastest line counting tool on windows</b>.
 </p>
 
