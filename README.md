@@ -58,7 +58,7 @@ ccloc v1.0
 https://github.com/hypertensiune/ccloc
 
 Usage:
- loc <directory|file> [options]
+ ccloc <directory|file> [options]
 
 Options:
  -h,  --help                 Print this info
