@@ -1560,7 +1560,7 @@ loc_language languages[LANGUAGES_SIZE] =
     },
     {
         "Python",
-        {"#", "", ""}
+        {"#", "\"\"\"", "\"\"\""}
     },
     {
         "PRQL",
