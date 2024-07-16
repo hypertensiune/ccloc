@@ -1,3 +1,5 @@
 .vscode
+*.exe
 util
-loc.exe
+hyp
+tests

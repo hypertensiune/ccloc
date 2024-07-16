@@ -155,9 +155,9 @@ Note: All tests were performed with <a href="https://github.com/sharkdp/hyperfin
 | `tokei` | 760.7 ± 68.5 | 691.1 | 868.7 | 1.44 ± 0.14 |
 | `cloc` | 98341.0 ± 13755.0 | 67055.4 | 113494.0 | 186.17 ± 26.84 |
 
-### <a href="https://github.com/torvalds/linux">Linux Kernel</a> ~60k total files, ~14m lines
+### <a href="https://github.com/torvalds/linux">Linux Kernel</a> ~60k total files, ~35m lines
 
-Here you can see ccloc single threaded performance.
+Using only 1 thread is very slow in comparison with the rest. It actually is slower than not using threading at all and processing the file right when it was discovered instead of adding it to a queue for later processing.
 
 | Tool | Mean [s] | Min [s] | Max [s] | Relative |
 |:---|---:|---:|---:|---:|
@@ -184,11 +184,11 @@ ccloc is the fastest one on average but as the code base increases the time diff
 
 ### Multi-threading
 
-You can see here how increasing the number of threads actually impacts performance. Single threaded performance is quite low. With only 2 threads performance is almost doubled. I found 20 threads to be the sweat spot, of course in some cases there might be some performance gain by using more than 20 threads but they are not significant. In some cases as seen above, on the contrary, using more threads can slow down the program.
+You can see here how increasing the number of threads actually impacts performance. Single threaded performance is quite low. With only 2 threads performance is almost doubled. I found 20 threads to be the sweet spot, of course in some cases there might be some performance gain by using more than 20 threads but they are not significant. In some cases as seen above, on the contrary, using more threads can slow down the program.
 
 <p align="center">
-    <img src=graphs\linux.png>
     <img src=graphs\react.png>
+    <img src=graphs\linux.png>
 </p>
 
 ## Supported languages
