@@ -187,8 +187,8 @@ ccloc is the fastest one on average but as the code base increases the time diff
 You can see here how increasing the number of threads actually impacts performance. Single threaded performance is quite low. With only 2 threads performance is almost doubled. I found 20 threads to be the sweat spot, of course in some cases there might be some performance gain by using more than 20 threads but they are not significant. In some cases as seen above, on the contrary, using more threads can slow down the program.
 
 <p align="center">
-    <img src=graphs\linux.png width="49%">
-    <img src=graphs\react.png width="49%">
+    <img src=graphs\linux.png>
+    <img src=graphs\react.png>
 </p>
 
 ## Supported languages
