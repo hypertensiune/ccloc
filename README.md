@@ -16,7 +16,6 @@ Currently ccloc is only available for **Windows**. Support for **Linux** might b
 ### Example
 
 ```
-> cloc -t
 --------------------------+------------+------------+------------+------------
 Language                  |      Total |       Code |   Comments |      Files
 --------------------------+------------+------------+------------+------------
@@ -44,7 +43,6 @@ Parsed 153 files, files/s: 8500.00
 Read 433244 bytes (0.43 megabytes), bytes/s: 24069111.11 (mb/s: 24.07)
 ```
 
-
 ## Usage
 
 ### Installation
@@ -70,6 +68,63 @@ Options:
  -l,  --langs [langs]        Select only specified languages
       langs: name of any supported language
 ```
+
+#### Show details about every processed file
+
+```
+> ccloc . -a -t
+---------------------------------------------------+---------------------------+------------+------------+------------
+File                                               |                  Language |      Total |       Code |   Comments
+---------------------------------------------------+---------------------------+------------+------------+------------
+~\ccloc\ccloc.c                                    | C                         |        689 |        541 |         37
+~\ccloc\langs.h                                    | C Header                  |       1927 |       1896 |         23
+~\generate.py                                      | Python                    |         82 |         56 |          6
+~\languages.json                                   | JSON                      |       1800 |       1800 |          0
+~\README.md                                        | Markdown                  |        479 |        431 |          0
+---------------------------------------------------+---------------------------+------------+------------+------------
+TOTAL                                              |                           |       4977 |       4724 |         66
+---------------------------------------------------+---------------------------+------------+------------+------------
+Took: 25.00 milliseconds
+Parsed 5 files, files/s: 200.00
+Read 137208 bytes (0.14 megabytes), bytes/s: 5488320.00 (mb/s: 5.49)
+```
+
+#### Process only files that contain C Header or Python source code
+
+```
+> ccloc . -a -t -l "C Header" Python
+---------------------------------------------------+---------------------------+------------+------------+------------
+File                                               |                  Language |      Total |       Code |   Comments
+---------------------------------------------------+---------------------------+------------+------------+------------
+~\ccloc\langs.h                                    | C Header                  |       1927 |       1896 |         23
+~\generate.py                                      | Python                    |         82 |         56 |          6
+---------------------------------------------------+---------------------------+------------+------------+------------
+TOTAL                                              |                           |       2009 |       1952 |         29
+---------------------------------------------------+---------------------------+------------+------------+------------
+Took: 14.00 milliseconds
+Parsed 2 files, files/s: 142.86
+Read 37087 bytes (0.04 megabytes), bytes/s: 2649071.43 (mb/s: 2.65)
+```
+
+####  Sort by lines of comments
+```
+> ccloc . -t -s comments
+--------------------------+------------+------------+------------+------------
+Language                  |      Total |       Code |   Comments |      Files
+--------------------------+------------+------------+------------+------------
+C                         |        689 |        541 |         37 |          1
+C Header                  |       1927 |       1896 |         23 |          1
+Python                    |         82 |         56 |          6 |          1
+JSON                      |       1800 |       1800 |          0 |          1
+Markdown                  |        514 |        463 |          0 |          1
+--------------------------+------------+------------+------------+------------
+TOTAL                     |       5012 |       4756 |         66 |          5
+--------------------------+------------+------------+------------+------------
+Took: 1.00 milliseconds
+Parsed 5 files, files/s: 5000.00
+Read 139917 bytes (0.14 megabytes), bytes/s: 139917000.00 (mb/s: 139.92)
+```
+
 
 ## How it works
 ccloc works by recursively listing all files in the given directory, checking for each of them if it contains source code of a supported language and then parses that file to count the number of lines.
