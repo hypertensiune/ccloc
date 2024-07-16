@@ -1,3 +1,10 @@
+"""
+    Script used to generate the lang.h header containing the 
+    language database.
+
+    It uses tokei's language.json and modifies it to be used in c. 
+"""
+
 import json
 
 counter = 0
@@ -73,4 +80,3 @@ typedef struct
     for l in langs:
         f.write(l)
     f.write("};\n\n")
-
