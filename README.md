@@ -1,5 +1,18 @@
 <h1 align="center">CCLOC</h1>
 
+## Table of Contents
+1. [Usage](#usage)
+2. [How it works](#how-it-works)
+3. [Performance](#performance)
+    1. [Mousedroid - 80 files, 42k lines](#mousedroid-80-files-42k-lines)
+    2. [Redis - 1.5k files, 400k lines](#redis-15k-total-files-400k-lines)
+    3. [React - 6k files, 700k lines](#react-6k-total-files-700k-lines)
+    4. [DragonFlyBSD - 30k files, 14m lines](#dragonflybsd-30k-total-files-14m-lines)
+    5. [Linux Kernel - 60k files, 35m lines](#linux-kernel-60k-total-files-35m-lines)
+    6. [10x Linux Kernel](#10-copies-of-linux-kernel-600k-total-files-350m-lines)
+    7. [Multi-threading](#multi-threading)
+4. [Supported Languages](#supported-languages)
+
 <p>
     CCLOC is a tool for counting lines of code written in C. 
     It's inspired by other lines of code counting tools like 
@@ -178,14 +191,25 @@ Note: All tests were performed with <a href="https://github.com/sharkdp/hyperfin
 
 ### <a href="https://github.com/hypertensiune/Mousedroid">Mousedroid</a> 80 files, ~4.2k lines
 
-| Command | Mean [ms] | Min [ms] | Max [ms] | Relative |
+#### Windows
+| Tool | Mean [ms] | Min [ms] | Max [ms] | Relative |
 |:---|---:|---:|---:|---:|
 | `ccloc` | 16.6 ± 2.2 | 14.9 | 38.0 | 1.00 |
 | `tokei` | 25.8 ± 6.1 | 21.3 | 71.5 | 1.55 ± 0.42 |
 | `scc` | 49.3 ± 2.2 | 46.5 | 61.7 | 2.96 ± 0.42 |
 | `cloc` | 1545.8 ± 97.5 | 1464.6 | 1762.0 | 92.85 ± 13.83 |
 
+#### Linux
+| Tool | Mean [ms] | Min [ms] | Max [ms] | Relative |
+|:---|---:|---:|---:|---:|
+| `ccloc` | 3.3 ± 0.3 | 2.6 | 4.6 | 1.00 |
+| `tokei` | 5.1 ± 0.6 | 4.2 | 8.0 | 1.54 ± 0.22 |
+| `scc` | 7.7 ± 0.6 | 6.9 | 11.0 | 2.33 ± 0.26 |
+| `cloc` | 94.9 ± 5.8 | 89.6 | 113.6 | 28.65 ± 2.94 |
+
 ### <a href="https://github.com/redis/redis">Redis</a> ~1.5k total files, ~400k lines
+
+#### Windows
 | Tool | Mean [ms] | Min [ms] | Max [ms] | Relative |
 |:---|---:|---:|---:|---:|
 | `ccloc` | 35.1 ± 12.5 | 29.7 | 136.4 | 1.00 |
@@ -193,8 +217,17 @@ Note: All tests were performed with <a href="https://github.com/sharkdp/hyperfin
 | `tokei` | 89.0 ± 46.4 | 53.6 | 217.3 | 2.54 ± 1.60 |
 | `cloc` | 2312.9 ± 36.4 | 2274.1 | 2392.3 | 65.86 ± 23.44 |
 
+#### Linux
+| Tool | Mean [ms] | Min [ms] | Max [ms] | Relative |
+|:---|---:|---:|---:|---:|
+| `ccloc` | 14.3 ± 0.5 | 13.4 | 15.7 | 1.00 |
+| `tokei` | 22.2 ± 2.5 | 20.3 | 37.7 | 1.55 ± 0.18 |
+| `scc` | 26.1 ± 2.2 | 22.9 | 35.8 | 1.82 ± 0.16 |
+| `cloc` | 806.8 ± 14.4 | 791.2 | 839.2 | 56.23 ± 2.04 |
+
 ### <a href="https://github.com/facebook/react">React</a> ~6k total files, ~700k lines
 
+#### Windows
 | Tool | Mean [ms] | Min [ms] | Max [ms] | Relative |
 |:---|---:|---:|---:|---:|
 | `ccloc` | 95.0 ± 3.1 | 90.2 | 103.6 | 1.00 |
@@ -202,7 +235,17 @@ Note: All tests were performed with <a href="https://github.com/sharkdp/hyperfin
 | `scc` | 131.4 ± 1.8 | 128.6 | 134.6 | 1.38 ± 0.05 |
 | `cloc` | 6560.9 ± 131.6 | 6411.9 | 6754.7 | 69.03 ± 2.63 |
 
+#### Linux
+| Tool | Mean [ms] | Min [ms] | Max [ms] | Relative |
+|:---|---:|---:|---:|---:|
+| `ccloc` | 40.9 ± 0.6 | 39.8 | 43.2 | 1.00 |
+| `tokei`  | 50.4 ± 3.8 | 45.8 | 67.6 | 1.23 ± 0.09 |
+| `scc` | 79.3 ± 1.5 | 75.7 | 83.2 | 1.94 ± 0.05 |
+| `cloc` | 2000.6 ± 58.4 | 1930.1 | 2080.2 | 48.93 ± 1.61 |   
+
 ### <a href="https://github.com/DragonFlyBSD/DragonFlyBSD">DragonFlyBSD</a> ~30k total files, ~14m lines
+
+#### Windows
 | Tool | Mean [ms] | Min [ms] | Max [ms] | Relative |
 |:---|---:|---:|---:|---:|
 | `ccloc` | 528.2 ± 18.4 | 496.5 | 558.7 | 1.00 |
@@ -210,10 +253,19 @@ Note: All tests were performed with <a href="https://github.com/sharkdp/hyperfin
 | `tokei` | 760.7 ± 68.5 | 691.1 | 868.7 | 1.44 ± 0.14 |
 | `cloc` | 98341.0 ± 13755.0 | 67055.4 | 113494.0 | 186.17 ± 26.84 |
 
+#### Linux
+| Tool | Mean [ms] | Min [ms] | Max [ms] | Relative |
+|:---|---:|---:|---:|---:|
+| `ccloc` | 229.0 ± 4.0 | 223.5 | 235.1 | 1.00 |
+| `scc` | 426.5 ± 16.6 | 391.3 | 450.1 | 1.86 ± 0.08 |
+| `tokei` | 479.2 ± 10.8 | 460.6 | 493.1 | 2.09 ± 0.06 |
+| `cloc` | 28219.2 ± 417.4 | 27713.8 | 28877.3 | 123.22 ± 2.82 |
+
 ### <a href="https://github.com/torvalds/linux">Linux Kernel</a> ~60k total files, ~35m lines
 
 Using only 1 thread is very slow in comparison with the rest. It actually is slower than not using threading at all and processing the file right when it was discovered instead of adding it to a queue for later processing.
 
+#### Windows
 | Tool | Mean [s] | Min [s] | Max [s] | Relative |
 |:---|---:|---:|---:|---:|
 | `ccloc` | 1.648 ± 0.022 | 1.621 | 1.686 | 1.00 |
@@ -221,28 +273,46 @@ Using only 1 thread is very slow in comparison with the rest. It actually is slo
 | `scc` | 2.751 ± 0.015 | 2.726 | 2.771 | 1.67 ± 0.02 |
 | `ccloc -th 1` | 6.438 ± 0.020 | 6.413 | 6.481 | 3.91 ± 0.05 |
 
+#### Linux
+| Tool | Mean [ms] | Min [ms] | Max [ms] | Relative |
+|:---|---:|---:|---:|---:|
+| `ccloc` | 782.2 ± 11.3 | 772.1 | 809.3 | 1.00 |
+| `tokei` | 1017.0 ± 43.5 | 976.1 | 1116.7 | 1.30 ± 0.06 |
+| `scc` | 1325.0 ± 57.8 | 1250.2 | 1436.8 | 1.69 ± 0.08 |
+| `ccloc -th 1` | 2239.0 ± 30.7 | 2216.9 | 2312.1 | 2.86 ± 0.06 |
 
 ### 10 copies of <a href="https://github.com/torvalds/linux">Linux Kernel</a> ~600k total files, ~350m lines
 
-In this case tokei is faster than ccloc. At first I thought 20 threads are not enough to beat it, I guess tokei scales the parallelization somehow, maybe based on the number of files. Interestingly increasing the number of threads doesn't make it any faster. 
-
+In this case, on windows, tokei is faster than ccloc. Interestingly increasing the number of threads doesn't make it any faster, on the contrary it slows it down a bit. On the other hand, on linux, ccloc is still the fastest one and here increasing the number of threads actually increases performance (not by much though even if the number of threads is doubled).
+.
+#### Windows
 | Tool | Mean [s] | Min [s] | Max [s] | Relative |
 |:---|---:|---:|---:|---:|
 | `tokei` | 88.630 ± 6.231 | 82.825 | 100.736 | 1.00 |
 | `ccloc` | 95.670 ± 4.058 | 89.658 | 105.416 | 1.08 ± 0.09 |
-| `ccloc -th 50` | 96.204 s ±  5.449 s | 89.259 | 108.151 |  |
+| `ccloc -th 50` | 96.204 s ±  5.449 s | 89.259 | 108.151 | 1.09 ± 0.1 |
 | `scc` | 108.624 ± 7.338 | 95.996 | 120.292 | 1.23 ± 0.12 |
+
+#### Linux
+| Tool | Mean [s] | Min [s] | Max [s] | Relative |
+|:---|---:|---:|---:|---:|
+| `ccloc-th 50` | 24.768 ± 0.534 | 23.254 | 25.016 | 1.00 |
+| `ccloc` | 26.046 ± 2.653 | 19.468 | 29.372 | 1.05 ± 0.11 |
+| `scc` | 32.560 ± 5.658 | 17.389 | 37.592 | 1.31 ± 0.23 |
+| `tokei` | 35.302 ± 0.562 | 34.907 | 36.805 | 1.43 ± 0.04 |
 
 ### Conclusion
 
-ccloc is the fastest one on average but as the code base increases the time difference between it and tokei is getting smaller and smaller, tokei becoming faster on very large code bases, as shown in the last test with 10 copies of the Linux Kernel.
+**On windows**, ccloc is the fastest one on average but as the code base increases the time difference between it and tokei is getting smaller and smaller, tokei becoming faster on very large code bases, as shown in the last test with 10 copies of the Linux Kernel.
+
+**On linux**, ccloc remains the fastest one in all tests.
 
 ### Multi-threading
 
-You can see here how increasing the number of threads actually impacts performance. Single threaded performance is quite low. With only 2 threads performance is almost doubled. I found 20 threads to be the sweet spot, of course in some cases there might be some performance gain by using more than 20 threads but they are not significant. In some cases as seen above, on the contrary, using more threads can slow down the program.
+You can see here how increasing the number of threads actually impacts performance on each platform. Single threaded performance is quite low. I found 20 threads to be the sweet spot, of course in some cases there might be some performance gain by using more than 20 threads but they are not significant. In some cases as seen above, on the contrary, using more threads can slow down the program (this applies on windows, on linux it doesn't seem to slow down).
 
 <p align="center">
-    <img src=graphs\react.png>
+    <img src=graphs\windows.png>
     <img src=graphs\linux.png>
 </p>
 
