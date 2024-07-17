@@ -44,7 +44,10 @@
 #define MAX_FILE_DISPLAY_LEN 50
  
 #define ARG(i, s) (strcmp(argv[i], s) == 0)
-#define max(x, y) ((x) > (y) ? (x) : (y))
+
+#ifndef WIN32
+	#define max(x, y) ((x) > (y) ? (x) : (y))
+#endif
  
 pthread_mutex_t mutex;
  
