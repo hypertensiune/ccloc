@@ -142,7 +142,7 @@ ccloc works by recursively listing all files in the given directory, checking fo
 It also ignores files base on ```.gitignore``` files. ***It doesn't work** with special patterns like ```/path/*.c``` or ```/path**/*.c```.
 
 1. On each directory encountered parse ```.gitignore``` file (if it exists)
-2. Recursively list all files using ```FindFirstFile``` and ```FindNextFile```. Add each file to a queue for later processing if it is not ignored.
+2. Recursively list all files using ```FindFirstFile``` and ```FindNextFile``` on Windows and ```opendir``` and ```readdir``` on Linux. Add each file to a queue for later processing if it is not ignored.
 3. Start removing files from the queue in order to process them. Get the file's extension in order to determine the language. (If the file has no extension the language is not determined and the file is skipped).
 4. If the file contains source code of a supported language start processing it to count the number of lines.
 
