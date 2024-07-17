@@ -22,13 +22,19 @@
     SOFTWARE.
 */
 
-#include <windows.h>
+#ifdef WIN32
+    #include <windows.h>
+#endif
+#ifdef __unix__
+    #include <dirent.h>
+#endif
 
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <ctype.h>
 
 #include "langs.h"
 
@@ -356,7 +362,7 @@ loc_info parse_file(FILE* file, loc_language* lang)
         info.total_lines++;
         
         char* s = s2;
-        while(*s == ' ')
+        while(isspace(s[0]) && s[0] != '\n')
             s++;
 
         if(s[0] == '\n' && com_status == 0)
@@ -439,70 +445,127 @@ void lang_report_add(loc_report* report, int language_id, loc_info* info)
     pthread_mutex_unlock(&mutex);
 }
 
-int loc(const char* path, loc_list gitignoreFiles, queue* fileq)
-{
-    // if the current directory contains a .gitignore file use it to skip files from parsing
-    char gitpath[MAX_FILE_LEN];
-    sprintf(gitpath, "%s\\.gitignore", path);
-
-    FILE* fgit = fopen(gitpath, "r");
-    if(fgit != NULL)
+#ifdef WIN32
+    int loc(const char* path, loc_list gitignoreFiles, queue* fileq)
     {
-        char ignored[MAX_FILE_LEN];
-        while(fscanf(fgit, "%s", ignored) == 1)
+        // if the current directory contains a .gitignore file use it to skip files from parsing
+        char gitpath[MAX_FILE_LEN];
+        sprintf(gitpath, "%s\\.gitignore", path);
+
+        FILE* fgit = fopen(gitpath, "r");
+        if(fgit != NULL)
         {
-            if(ignored[0] == '/')
-                sprintf(gitpath, "%s%s", path, ignored);
+            char ignored[MAX_FILE_LEN];
+            while(fscanf(fgit, "%s", ignored) == 1)
+            {
+                if(ignored[0] == '/')
+                    sprintf(gitpath, "%s%s", path, ignored);
+                else
+                    sprintf(gitpath, "%s\\%s", path, ignored);
+                loc_list_add(&gitignoreFiles, gitpath);
+            }
+        }
+        fclose(fgit);
+
+        char file[MAX_FILE_LEN];
+        sprintf(file, "%s\\*", path);
+
+        WIN32_FIND_DATA findData;
+        HANDLE findHnd = NULL;
+
+
+        // return if current path is invalid
+        // if((findHnd = FindFirstFileEx(file, FindExInfoBasic, &findData, FindExSearchNameMatch, NULL, FIND_FIRST_EX_LARGE_FETCH)) == INVALID_HANDLE_VALUE)    
+        if((findHnd = FindFirstFile(file, &findData)) == INVALID_HANDLE_VALUE)
+            return -1;
+
+        // Find all files in the current path. 
+        // If a file is a directory (FILE_ATTRIBUTE_DIRECTORY) recursively call the function with the new path
+        do 
+        {
+            // continue if the current file is . or .. to avoid getting in the same directory again and in the parent directory
+            if(strcmp(findData.cFileName, ".") == 0 || strcmp(findData.cFileName, "..") == 0)
+                continue;
+            
+            sprintf(file, "%s\\%s", path, findData.cFileName);
+
+            // continue if the current file is ignored by a .gitignore file
+            if(loc_list_search(&gitignoreFiles, file))
+                continue;
+            
+            if(findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+            {
+                loc(file, gitignoreFiles, fileq);
+            }
             else
-                sprintf(gitpath, "%s\\%s", path, ignored);
-            loc_list_add(&gitignoreFiles, gitpath);
-        }
+            {     
+                enqueue(fileq, file);
+            }
+
+        } while(FindNextFile(findHnd, &findData));
+
+        FindClose(findHnd);
+
+        return 0;
     }
-    fclose(fgit);
+#endif
 
-    char file[MAX_FILE_LEN];
-    sprintf(file, "%s\\*", path);
-
-    WIN32_FIND_DATA findData;
-    HANDLE findHnd = NULL;
-
-    // return if current path is invalid
-    // if((findHnd = FindFirstFileEx(file, FindExInfoBasic, &findData, FindExSearchNameMatch, NULL, FIND_FIRST_EX_LARGE_FETCH)) == INVALID_HANDLE_VALUE)
-    if((findHnd = FindFirstFile(file, &findData)) == INVALID_HANDLE_VALUE)
+#ifdef __unix__
+    int loc(const char* path, loc_list gitignoreFiles, queue* fileq)
     {
-        return -1;
-    }
+        // if the current directory contains a .gitignore file use it to skip files from parsing
+        char gitpath[MAX_FILE_LEN];
+        sprintf(gitpath, "%s\\.gitignore", path);
 
-    // Find all files in the current path. 
-    // If a file is a directory (FILE_ATTRIBUTE_DIRECTORY) recursively call the function with the new path
-    do 
-    {
-        // continue if the current file is . or .. to avoid getting in the same directory again and in the parent directory
-        if(strcmp(findData.cFileName, ".") == 0 || strcmp(findData.cFileName, "..") == 0)
-            continue;
-        
-        sprintf(file, "%s\\%s", path, findData.cFileName);
-
-        // continue if the current file is ignored by a .gitignore file
-        if(loc_list_search(&gitignoreFiles, file))
-            continue;
-        
-        if(findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+        FILE* fgit = fopen(gitpath, "r");
+        if(fgit != NULL)
         {
-            loc(file, gitignoreFiles, fileq);
+            char ignored[MAX_FILE_LEN];
+            while(fscanf(fgit, "%s", ignored) == 1)
+            {
+                if(ignored[0] == '/')
+                    sprintf(gitpath, "%s%s", path, ignored);
+                else
+                    sprintf(gitpath, "%s\\%s", path, ignored);
+                loc_list_add(&gitignoreFiles, gitpath);
+            }
         }
-        else
-        {     
-            enqueue(fileq, file);
+        fclose(fgit);
+
+        char file[MAX_FILE_LEN];
+        sprintf(file, "%s\\*", path);
+
+        // return if current path is invalid
+        DIR* d = opendir(path)
+        if(d == NULL)
+            return -1;
+
+        // Find all files in the current path.
+        // If a file is a directory (dir->d_type == DT_DIR) recursively call the function with the new path 
+        struct dirent* dir;
+        while((dir = readdir(d)) != NULL)
+        {
+            // continue if the current file is . or .. to avoid getting in the same directory again and in the parent directory
+            if(strcmp(dir->d_name, ".") == 0 || strcmp(dir->d_name, "..") == 0)
+                continue;
+
+            // continue if the current file is ignored by a .gitignore file
+            if(loc_list_search(&gitignoreFiles, file))
+                continue;
+
+            sprintf(file, "%s\\%s", path, dir->d_name);
+
+            if(dir->d_type == DT_REG)
+                enqueue(fileq, file)   
+            else if(dir->d_type == DT_DIR)
+                loc(file, gitignoreFiles, fileq)
         }
 
-    } while(FindNextFile(findHnd, &findData));
+        closedir(d);
 
-    FindClose(findHnd);
-
-    return 0;
-}
-
+        return 0;
+    }
+#endif
 
 int report_code_comp(const void* a, const void* b)
 {   
