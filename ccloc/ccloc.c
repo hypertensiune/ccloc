@@ -1,18 +1,18 @@
 /*
     MIT License
-
+ 
     Copyright (c) 2024 hypertensiune
-
+ 
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal
     in the Software without restriction, including without limitation the rights
     to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
     copies of the Software, and to permit persons to whom the Software is
     furnished to do so, subject to the following conditions:
-
+ 
     The above copyright notice and this permission notice shall be included in all
     copies or substantial portions of the Software.
-
+ 
     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
     IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -21,31 +21,32 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
     SOFTWARE.
 */
-
+ 
 #ifdef WIN32
     #include <windows.h>
 #endif
 #ifdef __unix__
+    #define _DEFAULT_SOURCE
     #include <dirent.h>
 #endif
-
+ 
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <ctype.h>
-
+ 
 #include "langs.h"
-
+ 
 #define MAX_REPORTS 100
 #define MAX_FILE_LEN 500
 #define MAX_FILE_DISPLAY_LEN 50
-
+ 
 #define ARG(i, s) (strcmp(argv[i], s) == 0)
-
-pthread_t mutex;
-
+#define max(x, y) ((x) > (y) ? (x) : (y))
+ 
+pthread_mutex_t mutex;
+ 
 struct loc_options
 {
     int all;
@@ -56,7 +57,7 @@ struct loc_options
     int langs_n;
     char langs_array[100][20];
 } options;
-
+ 
 typedef struct
 {
     int total_lines;
@@ -66,59 +67,59 @@ typedef struct
     int files;
     long long bytes;
 } loc_info;
-
+ 
 typedef struct 
 {
     int language_id;
     loc_info info;
 } loc_file_report;
-
+ 
 typedef struct
 {
     int length;
     loc_file_report data[MAX_REPORTS];
     loc_file_report total;
 } loc_report;
-
-
+ 
+ 
 typedef struct _loc_list_node
 {
     char str[MAX_FILE_LEN];
     struct _loc_list_node* next;
     struct _loc_list_node* prev;
 } loc_list_node;
-
+ 
 typedef struct
 {
     loc_list_node* first;
     loc_list_node* last;
 } loc_list;
-
+ 
 typedef struct _queue_node
 {
     char str[500];
     struct _queue_node* next;
 } queue_node;
-
+ 
 typedef struct
 {
     queue_node* head;
     queue_node* tail;
     int len;
 } queue;
-
+ 
 typedef struct
 {
     queue* q;
     loc_report* report;
 } thread_arg;
-
+ 
 void enqueue(queue* q, char* str)
 {
     queue_node* n = calloc(1, sizeof(queue_node));
     n->next = NULL;
     strcpy(n->str, str);
-
+ 
     if(q->head == NULL && q->tail == NULL)
     {
         q->tail = n;
@@ -132,47 +133,47 @@ void enqueue(queue* q, char* str)
         q->tail = q->tail->next;
     }
 }
-
+ 
 char* dequeue(queue* q)
 {
     pthread_mutex_lock(&mutex);
-
+ 
     char* ret = NULL;
     if(q->len > 0)
     {
         queue_node* n = q->head;
         q->head = q->head->next;
-        
+ 
         ret = calloc(500, sizeof(char));
         strcpy(ret, n->str);
-
+ 
         free(n);
         q->len--;
     }
-    
+ 
     pthread_mutex_unlock(&mutex);
     return ret;
 }
-
+ 
 static inline void PRINT_REPORT_HEADER()
 {
     printf("--------------------------+------------+------------+------------+------------\n");
     printf("%-25s | %10s | %10s | %10s | %10s\n", "Language", "Total", "Code", "Comments", "Files");
     printf("--------------------------+------------+------------+------------+------------\n");
 }
-
+ 
 static inline void PRINT_REPORT(loc_file_report* report)
 {
     printf("%-25s | %10d | %10d | %10d | %10d\n", languages[report->language_id].name, report->info.total_lines, report->info.code_lines, report->info.com_lines, report->info.files);
 }
-
+ 
 static inline void PRINT_REPORT_TOTAL(loc_file_report* total)
 {
     printf("--------------------------+------------+------------+------------+------------\n");
     PRINT_REPORT(total);
     printf("--------------------------+------------+------------+------------+------------\n");
 }
-
+ 
 static inline void PRINT_FILE_REPORT_HEADER()
 {
     printf("---------------------------------------------------+---------------------------+------------+------------+------------\n");
@@ -187,29 +188,29 @@ static inline void PRINT_FILE_REPORT(char* file, int lang_id,  loc_info *li)
     file[0] = '~';
     printf("%-50s | %-25s | %10d | %10d | %10d\n", file, languages[lang_id].name, li->total_lines, li->code_lines, li->com_lines);
 }
-
+ 
 static inline void PRINT_FILE_REPORT_TOTAL(loc_info *li)
 {
     printf("---------------------------------------------------+---------------------------+------------+------------+------------\n");
     printf("%-50s | %-25s | %10d | %10d | %10d\n", "TOTAL", "", li->total_lines, li->code_lines, li->com_lines);
     printf("---------------------------------------------------+---------------------------+------------+------------+------------\n");
 }
-
+ 
 static inline void PRINT_TIME_STATS(double time, int files, long long bytes)
 {
     double files_per_sec = files / time;
     double bytes_per_sec = bytes / time;
-    
+ 
     if(time >= 1)
         printf("Took: %lf seconds\n", time);
     else
         printf("Took: %.2lf milliseconds\n", time * 1000);
-
+ 
     printf("Parsed %d files, files/s: %.2lf\n", files, files_per_sec);
     printf("Read %lld bytes (%.2lf megabytes), bytes/s: %.2lf (mb/s: %.2lf)\n", bytes, bytes / 1e6, bytes_per_sec, bytes_per_sec / 1e6);
     printf("\n\n");
 }
-
+ 
 static inline void PRINT_HELP()
 {
     printf("ccloc v1.0\nhttps://github.com/hypertensiune/ccloc\n\n");
@@ -225,15 +226,15 @@ static inline void PRINT_HELP()
     printf("      langs: name of any supported language\n");
     printf("\n\n");
 }
-
-
+ 
+ 
 void loc_list_add(loc_list* list, char* str)
 {
     loc_list_node* n = calloc(1, sizeof(loc_list_node));
     strcpy(n->str, str);
  
     n->next = NULL;
-
+ 
     if(list->last == NULL)
     {
         n->prev = NULL;
@@ -246,24 +247,23 @@ void loc_list_add(loc_list* list, char* str)
         list->last = n;
     }
 }
-
+ 
 void loc_list_delete(loc_list* list)
 {
     loc_list_node* n = list->last;
     list->last->next = NULL;
-
+ 
     n->prev = NULL;
     free(n);
 }
-
+ 
 int loc_list_search(loc_list* list, const char* str)
 {
     loc_list_node* p = list->first;
-
     while(p != NULL)
     {
         // use custom comparator that considers that '/' and '\' are the same
-
+ 
         int result = 1;
         for(int i = 0, j = 0; p->str[i] || str[j]; i++, j++)
             if(p->str[i] != str[j])
@@ -274,20 +274,22 @@ int loc_list_search(loc_list* list, const char* str)
                     break;
                 }
             }
-                
+ 
         if(result)
+        {
             return 1;
-
+        }
+ 
         p = p->next;
     }
     return 0;
 }
-
+ 
 int get_lang(char* file)
 {
     char aux[MAX_FILE_LEN]; //= calloc(strlen(file), sizeof(char));
     char* extension;
-
+ 
     strcpy(aux, file);
     char* tok = strtok(aux, ".");
     while(tok != NULL)
@@ -295,9 +297,9 @@ int get_lang(char* file)
         extension = tok;
         tok = strtok(NULL, ".");
     }
-
+ 
     int l = 0, r = EXTENSIONS_SIZE - 1;
-
+ 
     while(l <= r)
     {
         int m = (l + r) / 2;
@@ -305,7 +307,7 @@ int get_lang(char* file)
         if(comp == 0)
         {
             int lang_id = extensions[m].lang_id;
-            
+ 
             // if wanted languages are specified check if the identified 
             // language of the current file is in that list
             if(options.langs_n > 0)
@@ -329,53 +331,53 @@ int get_lang(char* file)
         else
             l = m + 1;
     }
-    
+ 
     return -1;
 }
-
+ 
 loc_info parse_file(FILE* file, loc_language* lang)
 {
     loc_info info = {0, 0, 0, 0, 0, 0};
-
+ 
     char c;
     int com_status = 0;
-
+ 
     int cc = 0, sc = 0;
-
+ 
     int sl = strlen(lang->com.sl);
     int mls = strlen(lang->com.ml_start);
     int mle = strlen(lang->com.ml_end);
-
+ 
     if(options.time)
     {
         // https://stackoverflow.com/a/238607
         fseek(file, 0, SEEK_END);
         long size = ftell(file);
         info.bytes = (long long)size;
-
+ 
         fseek(file, 0, SEEK_SET);
     }
-
+ 
     char* s2 = calloc(1000, sizeof(char));
     while(fgets(s2, 1000, file))
     {
         info.total_lines++;
-        
+ 
         char* s = s2;
         while(isspace(s[0]) && s[0] != '\n')
             s++;
-
+ 
         if(s[0] == '\n' && com_status == 0)
         {
             info.blank_lines++;
             continue;
         }
-
+ 
         if(sl > 0 && memcmp(s, lang->com.sl, sl) == 0)
         {
             info.com_lines++;
         }
-        
+ 
         if(mls > 0)
         {   
             if(com_status == 0)
@@ -394,23 +396,23 @@ loc_info parse_file(FILE* file, loc_language* lang)
                 }
             }
         }
-
+ 
         if(com_status == 1)
             info.com_lines++;
     }
     free(s2);
-
+ 
     info.code_lines = info.total_lines - info.com_lines - info.blank_lines;
-    
+ 
     return info;
 }
-
+ 
 void lang_report_add(loc_report* report, int language_id, loc_info* info)
 {
     // check if the current language is already added in the final report
-
+ 
     pthread_mutex_lock(&mutex);
-
+ 
     int index = report->length;
     for(int i = 0; i < report->length; i++)
     {
@@ -420,7 +422,7 @@ void lang_report_add(loc_report* report, int language_id, loc_info* info)
             break;
         }
     }
-
+ 
     if(index != report->length)
         report->data[index].info.files++;
     else
@@ -429,29 +431,29 @@ void lang_report_add(loc_report* report, int language_id, loc_info* info)
         report->data[index].info.files = 1;
         report->length++;
     }
-
+ 
     report->data[index].info.blank_lines += info->blank_lines;
     report->data[index].info.code_lines += info->code_lines;
     report->data[index].info.com_lines += info->com_lines;
     report->data[index].info.total_lines += info->total_lines;
-
+ 
     report->total.info.blank_lines += info->blank_lines;
     report->total.info.code_lines += info->code_lines;
     report->total.info.com_lines += info->com_lines;
     report->total.info.total_lines += info->total_lines;
     report->total.info.files++;
     report->total.info.bytes += info->bytes;
-
+ 
     pthread_mutex_unlock(&mutex);
 }
-
+ 
 #ifdef WIN32
     int loc(const char* path, loc_list gitignoreFiles, queue* fileq)
     {
         // if the current directory contains a .gitignore file use it to skip files from parsing
         char gitpath[MAX_FILE_LEN];
         sprintf(gitpath, "%s\\.gitignore", path);
-
+ 
         FILE* fgit = fopen(gitpath, "r");
         if(fgit != NULL)
         {
@@ -466,19 +468,19 @@ void lang_report_add(loc_report* report, int language_id, loc_info* info)
             }
         }
         fclose(fgit);
-
+ 
         char file[MAX_FILE_LEN];
         sprintf(file, "%s\\*", path);
-
+ 
         WIN32_FIND_DATA findData;
         HANDLE findHnd = NULL;
-
-
+ 
+ 
         // return if current path is invalid
         // if((findHnd = FindFirstFileEx(file, FindExInfoBasic, &findData, FindExSearchNameMatch, NULL, FIND_FIRST_EX_LARGE_FETCH)) == INVALID_HANDLE_VALUE)    
         if((findHnd = FindFirstFile(file, &findData)) == INVALID_HANDLE_VALUE)
             return -1;
-
+ 
         // Find all files in the current path. 
         // If a file is a directory (FILE_ATTRIBUTE_DIRECTORY) recursively call the function with the new path
         do 
@@ -486,13 +488,13 @@ void lang_report_add(loc_report* report, int language_id, loc_info* info)
             // continue if the current file is . or .. to avoid getting in the same directory again and in the parent directory
             if(strcmp(findData.cFileName, ".") == 0 || strcmp(findData.cFileName, "..") == 0)
                 continue;
-            
+ 
             sprintf(file, "%s\\%s", path, findData.cFileName);
-
+ 
             // continue if the current file is ignored by a .gitignore file
             if(loc_list_search(&gitignoreFiles, file))
                 continue;
-            
+ 
             if(findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
             {
                 loc(file, gitignoreFiles, fileq);
@@ -501,21 +503,21 @@ void lang_report_add(loc_report* report, int language_id, loc_info* info)
             {     
                 enqueue(fileq, file);
             }
-
+ 
         } while(FindNextFile(findHnd, &findData));
-
+ 
         FindClose(findHnd);
-
+ 
         return 0;
     }
 #endif
-
+ 
 #ifdef __unix__
     int loc(const char* path, loc_list gitignoreFiles, queue* fileq)
     {
         // if the current directory contains a .gitignore file use it to skip files from parsing
         char gitpath[MAX_FILE_LEN];
-        sprintf(gitpath, "%s\\.gitignore", path);
+        sprintf(gitpath, "%s/.gitignore", path);
 
         FILE* fgit = fopen(gitpath, "r");
         if(fgit != NULL)
@@ -526,20 +528,19 @@ void lang_report_add(loc_report* report, int language_id, loc_info* info)
                 if(ignored[0] == '/')
                     sprintf(gitpath, "%s%s", path, ignored);
                 else
-                    sprintf(gitpath, "%s\\%s", path, ignored);
+                    sprintf(gitpath, "%s/%s", path, ignored);
                 loc_list_add(&gitignoreFiles, gitpath);
             }
+            fclose(fgit); 
         }
-        fclose(fgit);
 
         char file[MAX_FILE_LEN];
-        sprintf(file, "%s\\*", path);
-
+ 
         // return if current path is invalid
-        DIR* d = opendir(path)
+        DIR* d = opendir(path);
         if(d == NULL)
             return -1;
-
+ 
         // Find all files in the current path.
         // If a file is a directory (dir->d_type == DT_DIR) recursively call the function with the new path 
         struct dirent* dir;
@@ -549,52 +550,53 @@ void lang_report_add(loc_report* report, int language_id, loc_info* info)
             if(strcmp(dir->d_name, ".") == 0 || strcmp(dir->d_name, "..") == 0)
                 continue;
 
+            sprintf(file, "%s/%s", path, dir->d_name);
+
             // continue if the current file is ignored by a .gitignore file
             if(loc_list_search(&gitignoreFiles, file))
                 continue;
-
-            sprintf(file, "%s\\%s", path, dir->d_name);
-
-            if(dir->d_type == DT_REG)
-                enqueue(fileq, file)   
-            else if(dir->d_type == DT_DIR)
-                loc(file, gitignoreFiles, fileq)
+ 
+            sprintf(file, "%s/%s", path, dir->d_name);
+            if(dir->d_type != DT_DIR)
+                enqueue(fileq, file);
+            else
+                loc(file, gitignoreFiles, fileq);
         }
-
+ 
         closedir(d);
-
+ 
         return 0;
     }
 #endif
-
+ 
 int report_code_comp(const void* a, const void* b)
 {   
     int aa = ((loc_file_report*)a)->info.code_lines;
     int bb = ((loc_file_report*)b)->info.code_lines;
     return (aa < bb) - (aa > bb);
 }
-
+ 
 int report_total_comp(const void* a, const void* b)
 {
     int aa = ((loc_file_report*)a)->info.total_lines;
     int bb = ((loc_file_report*)b)->info.total_lines;
     return (aa < bb) - (aa > bb);
 }
-
+ 
 int report_comments_comp(const void* a, const void* b)
 {
     int aa = ((loc_file_report*)a)->info.com_lines;
     int bb = ((loc_file_report*)b)->info.com_lines;
     return (aa < bb) - (aa > bb);
 }
-
+ 
 int report_files_comp(const void* a, const void* b)
 {
     int aa = ((loc_file_report*)a)->info.files;
     int bb = ((loc_file_report*)b)->info.files;
     return (aa < bb) - (aa > bb);
 }
-
+ 
 void* thread_worker(void* arg)
 {
     thread_arg* targ = (thread_arg*)arg;
@@ -607,18 +609,18 @@ void* thread_worker(void* arg)
             FILE* f = fopen(s, "r");
             loc_info info = parse_file(f, &languages[lang_id]);
             fclose(f);
-
+ 
             if(options.all)
             {
                 PRINT_FILE_REPORT(s, lang_id, &info);
             }
-            
+ 
             lang_report_add(targ->report, lang_id, &info);
         }
         free(s);
     }
 }
-
+ 
 int main(int argc, char** argv)
 {    
     int nthreads = 20;
@@ -629,7 +631,7 @@ int main(int argc, char** argv)
         PRINT_HELP();
         return 0;
     }
-    
+ 
     for(int i = 2; i < argc; i++)
     {
         if(ARG(i, "-a") || ARG(i, "--all"))
@@ -659,29 +661,32 @@ int main(int argc, char** argv)
             i--;
         }
     }
-    
+
     clock_t begin = clock();
-
+ 
     // if the path given is a file open and process it right away
-    FILE* f = fopen(argv[1], "r");
-    if(f != NULL)
+    if(strcmp(argv[1], ".") != 0 && strcmp(argv[1], "..") != 0)
     {
-        int lang_id = get_lang(argv[1]);
-        loc_info info = parse_file(f, &languages[lang_id]);
-        fclose(f);
-
-        PRINT_REPORT_HEADER();
-        printf("%-25s | %10d | %10d | %10d | %10d\n", languages[lang_id].name, info.total_lines, info.code_lines, info.com_lines, 1);
-        printf("--------------------------+------------+------------+------------+------------\n\n");
-
-        return 0;
+        FILE* f = fopen(argv[1], "r");
+        if(f != NULL)
+        {
+            int lang_id = get_lang(argv[1]);
+            loc_info info = parse_file(f, &languages[lang_id]);
+            fclose(f);
+    
+            PRINT_REPORT_HEADER();
+            printf("%-25s | %10d | %10d | %10d | %10d\n", languages[lang_id].name, info.total_lines, info.code_lines, info.com_lines, 1);
+            printf("--------------------------+------------+------------+------------+------------\n\n");
+    
+            return 0;
+        }
     }
-
+ 
     loc_list gitignoredFiles = {NULL, NULL};
     loc_list_add(&gitignoredFiles, ".\\.gitignore");
 
     loc_report report = {.length = 0, .total.language_id = TOTAL};
-
+ 
     queue fileq;
     fileq.head = fileq.tail = NULL;
 
@@ -698,14 +703,14 @@ int main(int argc, char** argv)
     }
 
     thread_arg targ = {&fileq, &report};
-
+ 
     pthread_mutex_init(&mutex, NULL);
     for(int i = 0; i < nthreads; i++)
         pthread_create(&threads[i], NULL, thread_worker, &targ);
-
+ 
     for(int i = 0; i < nthreads; i++)
         pthread_join(threads[i], NULL);
-
+ 
     // if there is no sort option default to sort by number of code lines
     if(!options.sort || (options.sort && strcmp(options.sort_method, "code") == 0))
     {
@@ -726,9 +731,9 @@ int main(int argc, char** argv)
             qsort(report.data, report.length, sizeof(loc_file_report), &report_files_comp);
         }
     }
-
+ 
     clock_t end = clock();
-
+ 
     if(!options.all)
     {   
         PRINT_REPORT_HEADER();
@@ -742,11 +747,11 @@ int main(int argc, char** argv)
     {
         PRINT_FILE_REPORT_TOTAL(&report.total.info);
     }
-
+ 
     if(options.time)
     {
         PRINT_TIME_STATS((double)(end - begin) / CLOCKS_PER_SEC, report.total.info.files, report.total.info.bytes);
     }
-
+ 
     return 0;
 }
