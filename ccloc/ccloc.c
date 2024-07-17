@@ -539,7 +539,7 @@ void lang_report_add(loc_report* report, int language_id, loc_info* info)
         }
 
         char file[MAX_FILE_LEN];
- 
+        
         // return if current path is invalid
         DIR* d = opendir(path);
         if(d == NULL)
@@ -559,7 +559,7 @@ void lang_report_add(loc_report* report, int language_id, loc_info* info)
             // continue if the current file is ignored by a .gitignore file
             if(loc_list_search(&gitignoreFiles, file))
                 continue;
- 
+
             sprintf(file, "%s/%s", path, dir->d_name);
             if(dir->d_type != DT_DIR)
                 enqueue(fileq, file);
@@ -671,10 +671,19 @@ int main(int argc, char** argv)
     // if the path given is a file open and process it right away
     if(strcmp(argv[1], ".") != 0 && strcmp(argv[1], "..") != 0)
     {
-        FILE* f = fopen(argv[1], "r");
+        #ifdef WIN32
+            FILE* f = fopen(argv[1], "r");
+        #else
+            // avoid opening directories on unix operating systems
+            // https://stackoverflow.com/questions/42876210/c-fopen-opening-directories
+            FILE* f = fopen(argv[1], "r+");
+        #endif
         if(f != NULL)
         {
             int lang_id = get_lang(argv[1]);
+            if(lang_id == -1)
+                return 0;
+            
             loc_info info = parse_file(f, &languages[lang_id]);
             fclose(f);
     
@@ -685,7 +694,7 @@ int main(int argc, char** argv)
             return 0;
         }
     }
- 
+
     loc_list gitignoredFiles = {NULL, NULL};
     loc_list_add(&gitignoredFiles, ".\\.gitignore");
 
