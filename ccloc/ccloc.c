@@ -148,9 +148,9 @@ char* dequeue(queue* q)
         queue_node* n = q->head;
         q->head = q->head->next;
  
-        ret = calloc(500, sizeof(char));
+        ret = calloc(MAX_FILE_LEN, sizeof(char));
         strcpy(ret, n->str);
- 
+
         free(n);
         q->len--;
     }
@@ -291,19 +291,25 @@ int loc_list_search(loc_list* list, const char* str)
  
 int get_lang(char* file)
 {
-    char aux[MAX_FILE_LEN]; //= calloc(strlen(file), sizeof(char));
-    char* extension;
- 
+    char aux[MAX_FILE_LEN];
     strcpy(aux, file);
-    char* tok = strtok(aux, ".");
+    
+    // changed strtok to strtok_r which is thread safe 
+    // pointed by https://www.reddit.com/r/C_Programming/comments/1e5r8r0/comment/ldp2t32/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button
+    char* extension = NULL;
+    char* save;
+    char* tok = strtok_r(aux, ".", &save);
     while(tok != NULL)
     {   
         extension = tok;
-        tok = strtok(NULL, ".");
+        tok = strtok_r(NULL, ".", &save);
     }
  
+    if(extension == NULL)
+        return -1;
+
     int l = 0, r = EXTENSIONS_SIZE - 1;
- 
+    
     while(l <= r)
     {
         int m = (l + r) / 2;
@@ -607,6 +613,7 @@ void* thread_worker(void* arg)
     char* s = NULL;
     while((s = dequeue(targ->q)) != NULL)
     {
+
         int lang_id = get_lang(s);
         if(lang_id != -1)
         {
