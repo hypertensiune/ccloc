@@ -147,11 +147,15 @@ char* dequeue(queue* q)
     {
         queue_node* n = q->head;
         q->head = q->head->next;
- 
-        ret = calloc(MAX_FILE_LEN, sizeof(char));
-        strcpy(ret, n->str);
 
-        free(n);
+        // change pointed by https://www.reddit.com/r/C_Programming/comments/1e5r8r0/comment/ldp2t32/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button
+        
+        //ret = calloc(MAX_FILE_LEN, sizeof(char));
+        //strcpy(ret, n->str);
+
+        ret = n->str;
+
+        //free(n);
         q->len--;
     }
  
@@ -252,15 +256,6 @@ void loc_list_add(loc_list* list, char* str)
     }
 }
  
-void loc_list_delete(loc_list* list)
-{
-    loc_list_node* n = list->last;
-    list->last->next = NULL;
- 
-    n->prev = NULL;
-    free(n);
-}
- 
 int loc_list_search(loc_list* list, const char* str)
 {
     loc_list_node* p = list->first;
@@ -305,6 +300,8 @@ int get_lang(char* file)
         tok = strtok_r(NULL, ".", &save);
     }
  
+    // return -1 if the files doesn't have an extension
+    // prevents comparing an uninitialized pointed further down
     if(extension == NULL)
         return -1;
 
