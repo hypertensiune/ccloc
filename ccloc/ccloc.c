@@ -289,9 +289,10 @@ int get_lang(char* file)
     char aux[MAX_FILE_LEN];
     strcpy(aux, file);
     
+    char* extension = NULL;
+    
     // changed strtok to strtok_r which is thread safe 
     // pointed by https://www.reddit.com/r/C_Programming/comments/1e5r8r0/comment/ldp2t32/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button
-    char* extension = NULL;
     char* save;
     char* tok = strtok_r(aux, ".", &save);
     while(tok != NULL)
