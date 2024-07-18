@@ -20,11 +20,8 @@
     <a href="https://github.com/boyter/scc">scc</a> and
     <a href="https://github.com/AlDanial/cloc">cloc</a>.
     CCLOC has vast language support, can accurately count lines of code. ([see](#how-it-works) for more details about comment lines counting). 
-    It's goal is to be the <b>fastest line counting tool on windows</b>.
+    It's goal is to be the <b>fastest line counting tool</b> on windows & linux.
 </p>
-
-Currently ccloc is only available for **Windows**. Support for **Linux** might be available later.
-
 
 ### Example
 
@@ -60,12 +57,12 @@ Read 433244 bytes (0.43 megabytes), bytes/s: 24069111.11 (mb/s: 24.07)
 
 ### Installation
 
-You can build ccloc by yourself or you can download the availabe prebuilt binaries in the releases section. 
+You can build ccloc by yourself or you can download the availabe prebuilt binaries for **windows** and **linux** in the releases section. 
 
 ### Options
 
 ```
-ccloc v1.0
+ccloc v1.0.1
 https://github.com/hypertensiune/ccloc
 
 Usage:
@@ -145,7 +142,7 @@ ccloc works by recursively listing all files in the given directory, checking fo
 It also ignores files base on ```.gitignore``` files. ***It doesn't work** with special patterns like ```/path/*.c``` or ```/path**/*.c```.
 
 1. On each directory encountered parse ```.gitignore``` file (if it exists)
-2. Recursively list all files using ```FindFirstFile``` and ```FindNextFile```. Add each file to a queue for later processing if it is not ignored.
+2. Recursively list all files using ```FindFirstFile``` and ```FindNextFile``` on Windows and ```opendir``` and ```readdir``` on Linux. Add each file to a queue for later processing if it is not ignored.
 3. Start removing files from the queue in order to process them. Get the file's extension in order to determine the language. (If the file has no extension the language is not determined and the file is skipped).
 4. If the file contains source code of a supported language start processing it to count the number of lines.
 
@@ -187,7 +184,7 @@ I tested and compared ccloc to tokei, scc and cloc on one of my projects and som
 
 ccloc's performance is given by multithreading. By default it creates 20 threads to process the files in the queue.
 
-Note: All tests were performed with <a href="https://github.com/sharkdp/hyperfine">hyperfine</a> with ```--warmup 3``` for a warm cache and 10 runs. All tests were performed on a Win11 23H2 machine with a Ryzen 9 7940HS with 16GB DDR5 4800Mhz. Timings may very on different machines.
+Note: All tests were performed with <a href="https://github.com/sharkdp/hyperfine">hyperfine</a> with ```--warmup 3``` for a warm cache and 10 runs. Tests were performed on Windows 11 23H2 and Ubuntu 22.04 LTS virtual machine (Ryzen 9 7940HS with 16GB DDR5 4800Mhz) Timings may very on different machines.
 
 ### <a href="https://github.com/hypertensiune/Mousedroid">Mousedroid</a> 80 files, ~4.2k lines
 
