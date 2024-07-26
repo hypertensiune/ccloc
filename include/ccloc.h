@@ -25,6 +25,12 @@
 #ifndef CCLOC_H
 #define CCLOC_H
 
+#if defined CCLOC_LIB || defined CCLOC_ALL
+    #define CCLOC_LANGS_DEFS
+    #define CCLOC_LANGS
+    #define CCLOC_EXTS
+#endif
+
 #include "langs.h"
 
 #define MAX_REPORTS 100
@@ -57,15 +63,20 @@ typedef struct
     int all;
     int time;
     int sort;
-    char sort_method[10];
     int langs;
-    int langs_n;
-    char langs_array[100][20];
     int threads;
+    int langs_n;
+    char sort_method[10];
+    char langs_array[100][20];
 } loc_options;
 
-extern loc_language languages[];
-extern loc_extension extensions[];
+#ifdef CCLOC_LANGS
+    extern loc_language languages[];
+#endif
+
+#ifdef CCLOC_EXTS
+    extern loc_extension extensions[];
+#endif
 
 /**
  * @param path The file/directory on which to perform the counting

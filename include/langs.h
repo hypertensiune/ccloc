@@ -25,7 +25,7 @@
 #ifndef LANGS_H
 #define LANGS_H
 
-#if defined LIB || defined LANGUAGES
+#ifdef CCLOC_LANGS_DEFS
     #define Abap 0
     #define ABNF 1
     #define ActionScript 2

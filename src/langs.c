@@ -22,7 +22,7 @@
     SOFTWARE.
 */
 
-#define LIB
+#define CCLOC_LANGS_DEFS
 
 #include "../include/langs.h"
 

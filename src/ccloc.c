@@ -513,8 +513,8 @@ void* thread_worker(void* arg)
             loc_info info = parse_file(f, &languages[lang_id]);
             fclose(f);
 
-            #ifdef CLI
-            if(options.all)
+            #ifdef CCLOC_CLI
+            if(targ->options.all)
                 PRINT_FILE_REPORT(s, lang_id, &info);
             #endif
  

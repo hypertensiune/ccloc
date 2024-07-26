@@ -2,7 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#define LANGUAGES
+#define CCLOC_ALL
 #include "include/ccloc.h"
 
 #define ARG(i, s) (strcmp(argv[i], s) == 0)
@@ -81,7 +81,7 @@ static inline void PRINT_HELP()
 
 int main(int argc, char** argv)
 {   
-    loc_options options = {.threads = 20};
+    loc_options options = {.all = 0, .time = 0, .sort = 0, .langs = 0, .threads = 20};
     loc_report report = {.length = 0, .total.language_id = TOTAL};
 
     if(argc < 2 || ARG(1, "-h") || ARG(1, "--help") || argv[1][0] == '-')

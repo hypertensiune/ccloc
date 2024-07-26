@@ -40,7 +40,7 @@
 #include <time.h>
 #include <ctype.h>
 
-#define LIB
+#define CCLOC_LIB
 
 #include "../include/ccloc.h"
  
