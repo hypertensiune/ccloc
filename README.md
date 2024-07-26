@@ -22,6 +22,9 @@
     CCLOC has vast language support, can accurately count lines of code. ([see](#how-it-works) for more details about comment lines counting). 
     It's goal is to be the <b>fastest line counting tool</b> on windows & linux.
 </p>
+<p>
+    CCLOC is also a library. For more details and how to use see [this](https://github.com/hypertensiune/ccloc/blob/master/LIBRARY.md)
+</p>
 
 ### Example
 
