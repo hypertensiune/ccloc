@@ -65,7 +65,7 @@ static inline void PRINT_TIME_STATS(double time, int files, long long bytes)
  
 static inline void PRINT_HELP()
 {
-    printf("ccloc v1.0.1\nhttps://github.com/hypertensiune/ccloc\n\n");
+    printf("ccloc v1.0.2\nhttps://github.com/hypertensiune/ccloc\n\n");
     printf("Usage:\n ccloc <directory|file> [options]\n\n");
     printf("Options:\n");
     printf(" -h,  --help                 Print this info\n");
