@@ -29,22 +29,22 @@ static inline void PRINT_REPORT_TOTAL(loc_info* total)
 static inline void PRINT_FILE_REPORT_HEADER()
 {
     printf("---------------------------------------------------+---------------------------+------------+------------+------------\n");
-    printf("%-50s | %25s | %10s | %10s | %10s\n", "File", "Language", "Total", "Code", "Comments");
+    printf("%-50s | %-25s | %10s | %10s | %10s\n", "File", "Language", "Total", "Code", "Comments");
     printf("---------------------------------------------------+---------------------------+------------+------------+------------\n");
 }
 
-static inline void PRINT_FILE_REPORT(char* file, int lang_id,  loc_info *li)
+static inline void PRINT_FILE_REPORT(char* file,  loc_info *li)
 {
     int len = __max(strlen(file), 50);
     file = file + len - 50;
     file[0] = '~';
-    printf("%-50s | %-25s | %10d | %10d | %10d\n", file, languages[lang_id].name, li->total_lines, li->code_lines, li->com_lines);
+    printf("%-50s | %-25s | %10d | %10d | %10d\n", file, languages[li->language_id].name, li->total_lines, li->code_lines, li->com_lines);
 }
  
 static inline void PRINT_FILE_REPORT_TOTAL(loc_info *li)
 {
     printf("---------------------------------------------------+---------------------------+------------+------------+------------\n");
-    printf("%-50s | %-25s | %10d | %10d | %10d\n", "TOTAL", "", li->total_lines, li->code_lines, li->com_lines);
+    printf("TOTAL %38d files | %-25s | %10d | %10d | %10d\n", li->files, "", li->total_lines, li->code_lines, li->com_lines);
     printf("---------------------------------------------------+---------------------------+------------+------------+------------\n");
 }
  
@@ -82,7 +82,11 @@ static inline void PRINT_HELP()
 int main(int argc, char** argv)
 {   
     loc_options options = {.all = 0, .time = 0, .sort = 0, .langs = 0, .threads = 20};
-    loc_report report = {.length = 0, .total.language_id = TOTAL};
+    
+    loc_report lreport = {.length = 0, .total.language_id = TOTAL};
+    loc_file_report freport = {0, 0, 0, NULL};
+
+    void* report = &lreport;
 
     if(argc < 2 || ARG(1, "-h") || ARG(1, "--help") || argv[1][0] == '-')
     {
@@ -96,6 +100,7 @@ int main(int argc, char** argv)
         {
             options.all = 1;
             options.threads = 1;
+            report = &freport;
         }
         if(ARG(i, "-t") || ARG(i, "--time"))
             options.time = 1;
@@ -120,26 +125,41 @@ int main(int argc, char** argv)
         }
     }
 
-    int result = ccloc(argv[1], &options, &report);
+    int result = ccloc(argv[1], &options, report);
+    if(result == CCLOC_FILE_NOT_FOUND)
+    {
+        printf("Error: Directory / file not found");
+        return 0;
+    }
 
     if(!options.all)
     {   
         PRINT_REPORT_HEADER();
-        for(int i = 0; i < report.length; i++)
+        for(int i = 0; i < lreport.length; i++)
         {
-            PRINT_REPORT(&report.data[i]);
+            PRINT_REPORT(&lreport.data[i]);
         }
-        PRINT_REPORT_TOTAL(&report.total);
+        PRINT_REPORT_TOTAL(&lreport.total);
+
+        if(options.time)
+        {
+            PRINT_TIME_STATS(lreport.time, lreport.total.files, lreport.total.bytes);
+        }
     }
     else
     {   
-        PRINT_FILE_REPORT_TOTAL(&report.total);
+        PRINT_FILE_REPORT_HEADER();
+        for(int i = 0; i < freport.length; i++)
+        {
+            PRINT_FILE_REPORT(freport.data[i].file, &freport.data[i].data);
+        }
+        PRINT_FILE_REPORT_TOTAL(&freport.total);
+
+        if(options.time)
+        {
+            PRINT_TIME_STATS(freport.time, freport.total.files, freport.total.bytes);
+        }
     }
- 
-    if(options.time)
-    {
-        PRINT_TIME_STATS(report.time, report.total.files, report.total.bytes);
-    }
- 
+    
     return 0;
 }

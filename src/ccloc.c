@@ -309,16 +309,15 @@ loc_info parse_file(FILE* file, loc_language* lang)
     return info;
 }
  
-void lang_report_add(loc_report* report, int language_id, loc_info* info)
-{
-    // check if the current language is already added in the final report
- 
+void loc_report_add(loc_report* report, loc_info* info)
+{ 
     pthread_mutex_lock(&mutex);
- 
+    
+    // check if the current language is already added in the final report
     int index = report->length;
     for(int i = 0; i < report->length; i++)
     {
-        if(report->data[i].language_id == language_id)
+        if(report->data[i].language_id == info->language_id)
         {
             index = i;
             break;
@@ -329,7 +328,7 @@ void lang_report_add(loc_report* report, int language_id, loc_info* info)
         report->data[index].files++;
     else
     {
-        report->data[index].language_id = language_id;
+        report->data[index].language_id = info->language_id;
         report->data[index].files = 1;
         report->length++;
     }
@@ -346,6 +345,42 @@ void lang_report_add(loc_report* report, int language_id, loc_info* info)
     report->total.files++;
     report->total.bytes += info->bytes;
  
+    pthread_mutex_unlock(&mutex);
+}
+
+void loc_file_report_add(loc_file_report* report, const char* file, loc_info* info)
+{
+    pthread_mutex_lock(&mutex);
+
+    printf("%s adding file\n", file);
+
+    // if the report is unallocated
+    if(report->capacity == 0 && report->length == 0 && report->data == NULL)
+    {
+        report->capacity = 1000;
+        // report->data contains a char array of length MAX_FILE_LEN and loc_info
+        report->data = calloc(report->capacity = 1000, MAX_FILE_LEN + sizeof(loc_info));
+    }
+
+    // grow the array if there is no more space
+    if(report->length >= report->capacity)
+    {
+        report->capacity *= 2;
+        report->data = realloc(report->data, report->capacity * (MAX_FILE_LEN + sizeof(loc_info)));
+    }
+
+    strcpy(report->data[report->length].file, file);
+    report->data[report->length].data = *info;
+
+    report->length++;
+
+    report->total.blank_lines += info->blank_lines;
+    report->total.code_lines += info->code_lines;
+    report->total.com_lines += info->com_lines;
+    report->total.total_lines += info->total_lines;
+    report->total.files++;
+    report->total.bytes += info->bytes;
+
     pthread_mutex_unlock(&mutex);
 }
  
@@ -511,20 +546,19 @@ void* thread_worker(void* arg)
         {
             FILE* f = fopen(s, "r");
             loc_info info = parse_file(f, &languages[lang_id]);
+            info.language_id = lang_id;
             fclose(f);
 
-            #ifdef CCLOC_CLI
-            if(targ->options.all)
-                PRINT_FILE_REPORT(s, lang_id, &info);
-            #endif
- 
-            lang_report_add(targ->report, lang_id, &info);
+            if(targ->options->all)
+                loc_file_report_add((loc_file_report*)targ->report, s, &info);
+            else
+                loc_report_add((loc_report*)targ->report, &info);
         }
         free(s);
     }
 }
 
-int ccloc(const char* path, loc_options* options, loc_report* report)
+int ccloc(const char* path, loc_options* options, void* report)
 {
     int nthreads = 20;
     pthread_t threads[100];
@@ -556,7 +590,7 @@ int ccloc(const char* path, loc_options* options, loc_report* report)
             loc_info info = parse_file(f, &languages[lang_id]);
             fclose(f);
 
-            lang_report_add(report, info.language_id, &info);
+            loc_report_add((loc_report*)report, &info);
 
             return 0;
         }
@@ -575,30 +609,36 @@ int ccloc(const char* path, loc_options* options, loc_report* report)
     for(int i = 0; i < nthreads; i++)
         pthread_join(threads[i], NULL);
 
-    // if there is no sort option default to sort by number of code lines
-    if(!options->sort || (options->sort && strcmp(options->sort_method, "code") == 0))
+
+    if(!options->all)
     {
-        qsort(report->data, report->length, sizeof(loc_info), &report_code_comp);
-    }
-    else
-    {
-        if(strcmp(options->sort_method, "total") == 0)
+        loc_report* lreport = (loc_report*)report;
+
+        // if there is no sort option default to sort by number of code lines
+        if(!options->sort || (options->sort && strcmp(options->sort_method, "code") == 0))
         {
-            qsort(report->data, report->length, sizeof(loc_info), &report_total_comp);
+            qsort(lreport->data, lreport->length, sizeof(loc_info), &report_code_comp);
         }
-        else if(strcmp(options->sort_method, "comments") == 0)
+        else
         {
-            qsort(report->data, report->length, sizeof(loc_info), &report_comments_comp);
-        }
-        else if(strcmp(options->sort_method, "files") == 0)
-        {
-            qsort(report->data, report->length, sizeof(loc_info), &report_files_comp);
+            if(strcmp(options->sort_method, "total") == 0)
+            {
+                qsort(lreport->data, lreport->length, sizeof(loc_info), &report_total_comp);
+            }
+            else if(strcmp(options->sort_method, "comments") == 0)
+            {
+                qsort(lreport->data, lreport->length, sizeof(loc_info), &report_comments_comp);
+            }
+            else if(strcmp(options->sort_method, "files") == 0)
+            {
+                qsort(lreport->data, lreport->length, sizeof(loc_info), &report_files_comp);
+            }
         }
     }
  
     clock_t end = clock();
 
-    report->time = (double)(end - begin) / CLOCKS_PER_SEC;
+    ((loc_report*)report)->time = (double)(end - begin) / CLOCKS_PER_SEC;
 
     return 0;
 }

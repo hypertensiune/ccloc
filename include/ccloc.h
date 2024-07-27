@@ -34,6 +34,9 @@
 #include "langs.h"
 
 #define MAX_REPORTS 100
+#define MAX_FILE_REPORTS 1000
+
+#define MAX_FILE_LEN 500
 
 #define CCLOC_SUCCESS 0
 #define CCLOC_FILE_NOT_FOUND -1
@@ -50,13 +53,28 @@ typedef struct
     long long bytes;
 } loc_info;
 
+// loc_report is the final report in the default mode. (Contains details about every language used)
 typedef struct
 {
+    double time;
     int length;
     loc_info data[MAX_REPORTS];
     loc_info total;
-    double time;
 } loc_report;
+
+// loc_file_report is the final report in the "all" mode. (Contains details about every file parsed)
+typedef struct
+{
+    double time;
+    int length;
+    int capacity;
+    struct 
+    {
+        char file[MAX_FILE_LEN];
+        loc_info data;
+    } *data;
+    loc_info total;
+} loc_file_report;
 
 typedef struct 
 {
@@ -84,6 +102,6 @@ typedef struct
  * @param report The final report produced by ccloc after counting
  * @returns CCLOC_X status code
  */
-int ccloc(const char* path, loc_options* options, loc_report* report);
+int ccloc(const char* path, loc_options* options, void* report);
 
 #endif

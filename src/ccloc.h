@@ -41,13 +41,9 @@
 #include <ctype.h>
 
 #define CCLOC_LIB
-
 #include "../include/ccloc.h"
  
-#define MAX_FILE_LEN 500
 #define MAX_FILE_DISPLAY_LEN 50
-
-#define MAX_REPORTS 100
 
 #ifndef WIN32
 	#define max(x, y) ((x) > (y) ? (x) : (y))
@@ -82,7 +78,7 @@ typedef struct
 typedef struct
 {
     queue* q;
-    loc_report* report;
+    void* report;
     loc_options* options;
 } thread_arg;
 
@@ -95,7 +91,8 @@ int loc_list_search(loc_list* list, const char* str);
 int get_lang(const char* file, loc_options* options);
 loc_info parse_file(FILE* file, loc_language* lang);
 
-void lang_report_add(loc_report* report, int language_id, loc_info* info);
+void loc_report_add(loc_report* report, loc_info* info);
+void loc_file_report_add(loc_file_report* report, const char* file, loc_info* info);
 
 int find_files(const char* path, loc_list gitignoreFiles, queue* fileq);
 
