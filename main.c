@@ -7,6 +7,12 @@
 
 #define ARG(i, s) (strcmp(argv[i], s) == 0)
 
+#ifndef WIN32
+	#define max(x, y) ((x) > (y) ? (x) : (y))
+#else
+    #define max __max
+#endif
+
 static inline void PRINT_REPORT_HEADER()
 {
     printf("--------------------------+------------+------------+------------+------------\n");
@@ -35,7 +41,7 @@ static inline void PRINT_FILE_REPORT_HEADER()
 
 static inline void PRINT_FILE_REPORT(char* file,  loc_info *li)
 {
-    int len = __max(strlen(file), 50);
+    int len = max(strlen(file), 50);
     file = file + len - 50;
     file[0] = '~';
     printf("%-50s | %-25s | %10d | %10d | %10d\n", file, languages[li->language_id].name, li->total_lines, li->code_lines, li->com_lines);

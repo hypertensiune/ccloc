@@ -45,10 +45,6 @@
  
 #define MAX_FILE_DISPLAY_LEN 50
 
-#ifndef WIN32
-	#define max(x, y) ((x) > (y) ? (x) : (y))
-#endif
-
 typedef struct _loc_list_node
 {
     char str[MAX_FILE_LEN];
