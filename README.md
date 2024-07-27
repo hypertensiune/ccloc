@@ -23,7 +23,7 @@
     It's goal is to be the <b>fastest line counting tool</b> on windows & linux.
 </p>
 <p>
-    CCLOC is also a library. For more details and how to use see [this](https://github.com/hypertensiune/ccloc/blob/master/LIBRARY.md)
+    CCLOC is also a library. For more details and how to use see <a href="https://github.com/hypertensiune/ccloc/blob/master/LIBRARY.md">this</a>.
 </p>
 
 ### Example
