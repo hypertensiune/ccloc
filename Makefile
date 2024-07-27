@@ -6,11 +6,19 @@ _OBJS = ccloc.o langs.o
 
 OBJS = $(patsubst %,$(ODIR)/%,$(_OBJS))
 
+ifeq ($(OS), Windows_NT)
+	LIB := ccloc.lib
+	CLI := ccloc.exe
+else
+	LIB := libccloc.a
+	CLI := ccloc
+endif
+
 cli: lib
-	gcc main.c -o ccloc.exe -L. -lccloc
+	gcc main.c -o $(CLI) -L. -lccloc
 
 lib: $(OBJS) 
-	ar rcs ccloc.lib $^
+	ar rcs $(LIB) $^
 
 $(ODIR)/%.o: $(SDIR)/%.c | $(ODIR)
 	$(CC) -c $< -o $@
