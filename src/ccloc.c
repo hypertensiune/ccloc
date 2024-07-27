@@ -352,25 +352,22 @@ void loc_file_report_add(loc_file_report* report, const char* file, loc_info* in
 {
     pthread_mutex_lock(&mutex);
 
-    printf("%s adding file\n", file);
-
-    // if the report is unallocated
+    // // if the report is unallocated
     if(report->capacity == 0 && report->length == 0 && report->data == NULL)
     {
         report->capacity = 1000;
-        // report->data contains a char array of length MAX_FILE_LEN and loc_info
-        report->data = calloc(report->capacity = 1000, MAX_FILE_LEN + sizeof(loc_info));
+        report->data = calloc(report->capacity, sizeof(report->data[0]));
     }
 
-    // grow the array if there is no more space
+    // // grow the array if there is no more space
     if(report->length >= report->capacity)
     {
         report->capacity *= 2;
-        report->data = realloc(report->data, report->capacity * (MAX_FILE_LEN + sizeof(loc_info)));
+        report->data = realloc(report->data, report->capacity * sizeof(report->data[0]));
     }
 
     strcpy(report->data[report->length].file, file);
-    report->data[report->length].data = *info;
+    report->data[report->length].info = *info;
 
     report->length++;
 
@@ -533,6 +530,30 @@ int report_files_comp(const void* a, const void* b)
     int bb = ((loc_info*)b)->files;
     return (aa < bb) - (aa > bb);
 }
+
+int file_report_comp(const void* a, const void* b)
+{
+    /*
+        The pointers that qsort will pass to this function point to an unnamed struct (loc_file_report.data).
+        loc_file_report.data[i].info can be accessed by casting the void* to a loc_info*
+        because info is the first field of that unnamed struct
+    */
+    int aa = ((loc_info*)a)->language_id;
+    int bb = ((loc_info*)b)->language_id;
+
+    if(aa < bb)
+        return -1;
+    else if(aa > bb)
+        return 1;
+    else
+    {
+        // if the files have the same language sort by code lines
+        int ca = ((loc_info*)a)->code_lines;
+        int cb = ((loc_info*)b)->code_lines;
+
+        return (ca < cb) - (ca > cb);
+    }
+}
  
 void* thread_worker(void* arg)
 {
@@ -634,6 +655,12 @@ int ccloc(const char* path, loc_options* options, void* report)
                 qsort(lreport->data, lreport->length, sizeof(loc_info), &report_files_comp);
             }
         }
+    }
+    else
+    {
+        // when -a options is used the default sort is by language and by lines of code
+        loc_file_report* freport = (loc_file_report*)report;
+        qsort(freport->data, freport->length, sizeof(freport->data[0]), &file_report_comp);
     }
  
     clock_t end = clock();

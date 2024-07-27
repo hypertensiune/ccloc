@@ -70,8 +70,8 @@ typedef struct
     int capacity;
     struct 
     {
+        loc_info info;
         char file[MAX_FILE_LEN];
-        loc_info data;
     } *data;
     loc_info total;
 } loc_file_report;

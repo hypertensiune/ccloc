@@ -94,8 +94,13 @@ loc_info parse_file(FILE* file, loc_language* lang);
 void loc_report_add(loc_report* report, loc_info* info);
 void loc_file_report_add(loc_file_report* report, const char* file, loc_info* info);
 
+// Iterate trough the dictionary given by path and add all found files to a queue for later processing.
 int find_files(const char* path, loc_list gitignoreFiles, queue* fileq);
 
+// Comparator for sorting by language first and then by code. Used with -a option
+int file_report_comp(const void* a, const void* b);
+
+// Comparators for sorting by code, total, comment lines or by the number of files. Used without -a option.
 int report_code_comp(const void* a, const void* b);
 int report_total_comp(const void* a, const void* b);
 int report_comments_comp(const void* a, const void* b);

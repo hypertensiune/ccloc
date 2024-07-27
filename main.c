@@ -151,7 +151,9 @@ int main(int argc, char** argv)
         PRINT_FILE_REPORT_HEADER();
         for(int i = 0; i < freport.length; i++)
         {
-            PRINT_FILE_REPORT(freport.data[i].file, &freport.data[i].data);
+            if(i > 0 && freport.data[i].info.language_id != freport.data[i - 1].info.language_id)
+                    printf("---------------------------------------------------+---------------------------+------------+------------+------------\n");
+            PRINT_FILE_REPORT(freport.data[i].file, &freport.data[i].info);
         }
         PRINT_FILE_REPORT_TOTAL(&freport.total);
 
