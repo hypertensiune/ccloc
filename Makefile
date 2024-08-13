@@ -15,7 +15,7 @@ else
 endif
 
 cli: lib
-	gcc main.c -o $(CLI) -L. -lccloc
+	gcc main.c -o $(CLI) -L. -lccloc -lpthread
 
 lib: $(OBJS) 
 	ar rcs $(LIB) $^
